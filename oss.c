@@ -40,6 +40,7 @@ int main(int argc, char* argv[]){
     return 0;
 }
 
+// signal handles ctrl-c
 void sigint(int a)
 {
     printf("^C caught\n");
@@ -51,6 +52,7 @@ void sigint(int a)
     exit(0);
 }
 
+//increments the clock random value and adjust sec:nanos
 void ossClock(){
 
     int clockIncrement;     // random number to increment time
