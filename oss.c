@@ -1,31 +1,20 @@
-#include <stdio.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
+//
+// Created by crbaniak on 10/26/18.
+//
 
-#define SHMKEY 123123
+#include "ass4.h"
 
-void sharedMemory();
+int main(int argc, char* argv[]){
 
-int main() {
+    sharedMemoryConfig();
 
-    //#############################
-    // ### BLOCK FOR SHARED MEM ###
-    //#############################
-    //shared memory (key, size, permissions)
-    int exampleSize[3];
-    int shmid = shmget ( SHMKEY, sizeof(exampleSize[3]), 0775 | IPC_CREAT );
-    //get pointer to memory block
-    char * paddr = ( char * )( shmat ( shmid, NULL, 0 ) );
-    int * pint = ( int * )( paddr );
-    // init vars
-    pint[0] = 0;
-    pint[1] = 0;
-    pint[2] = 0;
+    sysClockshmPtr->nanoseconds = 3;
+    printf("%d\n", sysClockshmPtr->nanoseconds);
+    PCBshmPtr->bitVector = 4;
+    printf("%d\n", PCBshmPtr->bitVector);
 
-    //cries, very hard
+    sleep(100);
 
-
-
-    printf("Hello, World!\n");
+    shmdt(sysClockshmPtr);
     return 0;
 }

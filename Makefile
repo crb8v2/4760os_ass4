@@ -22,4 +22,4 @@ clean:
 	/bin/rm -f *.o
 	/bin/rm -f $(TARGET1)
 	/bin/rm -f $(TARGET2)
-	/bin/rm -f  text.txt
+	/bin/rm -f text.txt
