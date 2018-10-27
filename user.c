@@ -8,11 +8,9 @@ int main(int argc, char* argv[]){
 
     sharedMemoryConfig();
 
-//    sysClockshmPtr->nanoseconds = 3;
-    printf("%d\n", sysClockshmPtr->nanoseconds);
-//    PCBshmPtr->bitVector = 4;
-    printf("%d\n", PCBshmPtr->bitVector);
+    printf("Hello world\n");
 
     shmdt(sysClockshmPtr);
+    shmdt(PCBshmPtr);
     return 0;
 }

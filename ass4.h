@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <time.h>
 #include <errno.h>
 #include <sys/wait.h>
 #include <sys/shm.h>
@@ -21,16 +22,20 @@
 #include <string.h>
 
 
+
 //#################################
 //##### SHARED MEMORY SEGMENT #####
 //#################################
 
 //shared mem keys, probs not secure in a header
 #define CLOCK_SHMKEY 123123
-#define PCB_SHMKEY 1231234
+#define PCB_SHMKEY 123124
+
+
 
 //shared mem structures
 typedef struct {
+    pid_t pidHolder;
     float totalCPUTime;
     float timeInSystem;
     float timeLastBurst;
@@ -81,8 +86,9 @@ void sharedMemoryConfig(){
     //tests for shared mem
 //    sysClockshmPtr->nanoseconds = 3;
 //    printf("%d\n", sysClockshmPtr->nanoseconds);
-//    PCBshmPtr->bitVector = 4;
-//    printf("%d\n", PCBshmPtr->bitVector);
+
+//    sysClockshmPtr->nanoseconds = 0;
+//    sysClockshmPtr->seconds = 0;
 }
 
 #endif //ASS4_H
