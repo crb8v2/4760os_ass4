@@ -31,9 +31,10 @@ int main(int argc, char* argv[]){
 
         //fork a child
         if(forkMax == 0){
-            initForkToPCB();
+//            initForkToPCB();
             if ((PCBshmPtr[0]->pidHolder = fork()) == 0)
                 execl("./user", "user", NULL);
+                initForkToPCB();
             forkMax++;
         }
     }
@@ -78,7 +79,7 @@ void ossClock(){
 
 void initForkToPCB(){
     FILE *fp = fopen("log.txt", "a+");
-    fputs("Child: ", fp);
-//    fprintf(fp, "%d", pidHolder[bb]);
+    fprintf(fp, "Generating process with PID %d, at time %d  %d \n", PCBshmPtr[0]->pidHolder, sysClockshmPtr->seconds, sysClockshmPtr->nanoseconds);
     fclose(fp);
 }
+
