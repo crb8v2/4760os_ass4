@@ -39,9 +39,9 @@ typedef struct {
     float totalCPUTime;
     float timeInSystem;
     float timeLastBurst;
-    int priotiyValue;
+    int priorityValue;
     int bitVector;
-}  PCB_t ;
+}  PCB_t[20];
 
 typedef struct {
     unsigned int seconds;

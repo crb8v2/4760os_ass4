@@ -8,6 +8,10 @@ int main(int argc, char* argv[]){
 
     sharedMemoryConfig();
 
+    FILE *fp = fopen("log.txt", "a+");
+    fputs("Child: ", fp);
+    fclose(fp);
+
     printf("Hello world\n");
 
     shmdt(sysClockshmPtr);

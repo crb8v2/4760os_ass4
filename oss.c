@@ -6,6 +6,7 @@
 
 void ossClock();
 void sigint(int);
+void initForkToPCB();
 
 int main(int argc, char* argv[]){
 
@@ -30,7 +31,8 @@ int main(int argc, char* argv[]){
 
         //fork a child
         if(forkMax == 0){
-            if ((PCBshmPtr->pidHolder = fork()) == 0)
+            initForkToPCB();
+            if ((PCBshmPtr[0]->pidHolder = fork()) == 0)
                 execl("./user", "user", NULL);
             forkMax++;
         }
@@ -72,5 +74,11 @@ void ossClock(){
     printf("%d\n", sysClockshmPtr->nanoseconds);
 
     sleep(1);
+}
 
+void initForkToPCB(){
+    FILE *fp = fopen("log.txt", "a+");
+    fputs("Child: ", fp);
+//    fprintf(fp, "%d", pidHolder[bb]);
+    fclose(fp);
 }
