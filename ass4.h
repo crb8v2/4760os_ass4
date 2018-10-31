@@ -36,11 +36,22 @@
 //shared mem structures
 typedef struct {
     pid_t pidHolder;
-    float totalCPUTime;
-    float timeInSystem;
-    float timeLastBurst;
+
+    int startCPUTimeSeconds;
+    int startCPUTimeNanoseconds;
+
+    int endCPUTimeSeconds;
+    int endCPUTimeNanoseconds;
+
+    int totalCPUTimeSeconds;
+    int totalCPUTimeNanoseconds;
+
+    int burstValueSeconds;
+    int burstValueNanoseconds;
+
     int priorityValue;
     int bitVector;
+    int complete;
 }  PCB_t[20];
 
 typedef struct {
@@ -53,6 +64,7 @@ int sysClockshmid;              //holds the shared memory segment id
 int PCBshmid;
 systemClock_t *sysClockshmPtr;   //points to the data structure
 PCB_t *PCBshmPtr;
+int timeQuantum = 4000;
 
 // allocates shared mem
 void sharedMemoryConfig(){
