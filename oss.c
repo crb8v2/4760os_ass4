@@ -7,7 +7,7 @@
 void sigint(int);
 void ossClock();
 void forkIfSecondPassed();
-void initForkToPCB();
+void initForkToPCB(pid_t);
 void roundRobinSchedule();
 void writeResultsToLog();
 
@@ -65,7 +65,7 @@ void ossClock(){
     int clockIncrement;     // random number to increment time
     int rollover;           // rollover nanos
 
-    clockIncrement = (unsigned int) (rand() % 100000000 + 1);
+    clockIncrement = (unsigned int) (rand() % 600000000 + 1);
 
     if ((sysClockshmPtr->nanoseconds + clockIncrement) > 999999999){
         rollover = (sysClockshmPtr->nanoseconds + clockIncrement) - 999999999;
@@ -84,17 +84,22 @@ void ossClock(){
 
 //if one second happens, for a child
 void forkIfSecondPassed(){
-    if(oneSecHappened == 1){
-        //init forks to PCB
-        initForkToPCB();
-        if ((PCBshmPtr[0]->pidHolder = fork()) == 0)
+    if(oneSecHappened == 1) {
+        pid_t holder;
+        //init forks to PCB and writes to log
+        if ((holder = fork()) == 0){
             execl("./user", "user", NULL);
+        }
+
+        PCBshmPtr[0]->pidHolder = holder;
+
+        initForkToPCB(holder);
         oneSecHappened--;
     }
 }
 
-//init forks to PCB
-void initForkToPCB(){
+//init forks to PCB and writes to log
+void initForkToPCB(pid_t holder){
 
     PCBshmPtr[0]->startCPUTimeNanoseconds = sysClockshmPtr->nanoseconds;
     PCBshmPtr[0]->startCPUTimeSeconds = sysClockshmPtr->seconds;
@@ -102,8 +107,9 @@ void initForkToPCB(){
     FILE *fp = fopen("log.txt", "a+");
     fprintf(fp, "Generating process with PID %d (priority),"
                 "and putting it in queue (number) at time "
-                "%d  %d \n", PCBshmPtr[0]->pidHolder, PCBshmPtr[0]->startCPUTimeSeconds, PCBshmPtr[0]->startCPUTimeNanoseconds);
+                "%d : %d \n", holder, PCBshmPtr[0]->startCPUTimeSeconds, PCBshmPtr[0]->startCPUTimeNanoseconds);
     fclose(fp);
+
 }
 
 //round robin scheduler
@@ -118,7 +124,7 @@ void writeResultsToLog(){
         PCBshmPtr[0]->complete = 0;
         FILE *fp = fopen("log.txt", "a+");
         fprintf(fp, "Finished process with PID %d at time %d %d\n",
-                PCBshmPtr[0]->pidHolder, PCBshmPtr[0]->totalCPUTimeSeconds, PCBshmPtr[0]->totalCPUTimeSeconds);
+                PCBshmPtr[0]->pidHolder, PCBshmPtr[0]->totalCPUTimeSeconds, PCBshmPtr[0]->totalCPUTimeNanoseconds);
         fclose(fp);
     }
 }

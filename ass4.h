@@ -31,8 +31,6 @@
 #define CLOCK_SHMKEY 123123
 #define PCB_SHMKEY 123124
 
-
-
 //shared mem structures
 typedef struct {
     pid_t pidHolder;
