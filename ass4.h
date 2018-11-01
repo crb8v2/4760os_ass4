@@ -30,22 +30,22 @@
 //shared mem keys, probs not secure in a header
 #define CLOCK_SHMKEY 123123
 #define PCB_SHMKEY 123124
+#define MSG_QUEUE 123125
+
+#define TIME_QUANTUM 10
 
 //shared mem structures
 typedef struct {
     pid_t pidHolder;
 
-    int startCPUTimeSeconds;
-    int startCPUTimeNanoseconds;
+    int timeCreateSeconds;
+    int timeCreateNanoseconds;
 
-    int endCPUTimeSeconds;
-    int endCPUTimeNanoseconds;
+    int timeWorkingSeconds;
+    int timeWorkingNanoseconds;
 
     int totalCPUTimeSeconds;
     int totalCPUTimeNanoseconds;
-
-    int burstValueSeconds;
-    int burstValueNanoseconds;
 
     int priorityValue;
     int bitVector;
@@ -57,12 +57,19 @@ typedef struct {
     unsigned int nanoseconds;
 } systemClock_t;
 
+typedef struct {
+    pid_t pid;
+    int timeQuantum;
+} msgQueue_t;
+
 // globals for accessing pointers to shared memory
 int sysClockshmid;              //holds the shared memory segment id
 int PCBshmid;
+int msgQueueshmid;
+
 systemClock_t *sysClockshmPtr;   //points to the data structure
 PCB_t *PCBshmPtr;
-int timeQuantum = 4000;
+msgQueue_t *msgQueuePtr;
 
 // allocates shared mem
 void sharedMemoryConfig(){
@@ -89,6 +96,19 @@ void sharedMemoryConfig(){
     }
     PCBshmPtr = shmat(PCBshmid, NULL, 0);
     if(PCBshmPtr < 0){
+        perror("PCB shmat error in oss\n");
+        exit(errno);
+    }
+
+    // shared mem for message queue
+    msgQueueshmid = shmget(MSG_QUEUE, sizeof(msgQueue_t), IPC_CREAT|0777);
+    if(msgQueueshmid < 0)
+    {
+        perror("PCB shmget error in master \n");
+        exit(errno);
+    }
+    msgQueuePtr = shmat(msgQueueshmid, NULL, 0);
+    if(msgQueuePtr < 0){
         perror("PCB shmat error in oss\n");
         exit(errno);
     }

@@ -11,19 +11,13 @@ int main(int argc, char* argv[]){
     //init shared mem
     sharedMemoryConfig();
 
-
     //check if scheduled
-
+    while(msgQueuePtr->pid != getpid()){}
 
     //get duty of process to perform
     getProcessDuty();
 
     // do work
-
-    // update pcd with end times
-    PCBshmPtr[0]->endCPUTimeNanoseconds = sysClockshmPtr->nanoseconds;
-    PCBshmPtr[0]->endCPUTimeSeconds = sysClockshmPtr->seconds;
-
 
     // send back to queue
 
@@ -64,22 +58,28 @@ void getProcessDuty(){
     {
         case '0':
             printf("Child has duty 0\n");
-
+            PCBshmPtr[0]->timeWorkingNanoseconds = 0;
             break;
 
         case '1':
             printf("Child has duty 1\n");
+            PCBshmPtr[0]->timeWorkingNanoseconds = TIME_QUANTUM;
             break;
 
         case '2':
             printf("Child has duty 2\n");
+            PCBshmPtr[0]->timeWorkingSeconds = rand() % 5;
+            PCBshmPtr[0]->timeWorkingNanoseconds = (rand() % 1000) * 1000000;
             break;
 
         case '3':
             printf("Child has duty 3\n");
+            float percent = (rand() % 100);
+            percent /= 100;
+            PCBshmPtr[0]->timeWorkingNanoseconds = percent * TIME_QUANTUM;
             break;
 
-            // operator is doesn't match any case constant (+, -, *, /)
+            // operator is doesn't match any case constan
         default:
             printf("Error! operator is not correct");
     }

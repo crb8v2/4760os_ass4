@@ -101,13 +101,14 @@ void forkIfSecondPassed(){
 //init forks to PCB and writes to log
 void initForkToPCB(pid_t holder){
 
-    PCBshmPtr[0]->startCPUTimeNanoseconds = sysClockshmPtr->nanoseconds;
-    PCBshmPtr[0]->startCPUTimeSeconds = sysClockshmPtr->seconds;
+    // random creation time between 0-2 seconds
+    PCBshmPtr[0]->timeCreateSeconds = rand() % 2;
+    PCBshmPtr[0]->timeCreateNanoseconds = (rand() % 99) * 10000000;
 
     FILE *fp = fopen("log.txt", "a+");
     fprintf(fp, "Generating process with PID %d (priority),"
                 "and putting it in queue (number) at time "
-                "%d : %d \n", holder, PCBshmPtr[0]->startCPUTimeSeconds, PCBshmPtr[0]->startCPUTimeNanoseconds);
+                "%d : %d \n", holder, sysClockshmPtr->seconds, sysClockshmPtr[0].nanoseconds);
     fclose(fp);
 
 }
@@ -115,16 +116,46 @@ void initForkToPCB(pid_t holder){
 //round robin scheduler
 void roundRobinSchedule(){
 
+    if(sysClockshmPtr->seconds == 3){
+        msgQueuePtr->pid = PCBshmPtr[0]->pidHolder;
+    }
+
 }
 
 // if process completes, write data to log
 void writeResultsToLog(){
+
+    int rollover; //for clock
+
     if(PCBshmPtr[0]->complete == 1) {
-        PCBshmPtr[0]->totalCPUTimeSeconds = PCBshmPtr[0]->endCPUTimeSeconds - PCBshmPtr[0]->totalCPUTimeSeconds;
+
+        printf("were right here %d", PCBshmPtr[0]->timeCreateNanoseconds);
+        printf("were right here %d", PCBshmPtr[0]->timeWorkingNanoseconds);
+
+
+        PCBshmPtr[0]->totalCPUTimeSeconds = PCBshmPtr[0]->timeCreateSeconds + PCBshmPtr[0]->timeWorkingSeconds;
+        PCBshmPtr[0]->totalCPUTimeNanoseconds = PCBshmPtr[0]->timeCreateNanoseconds + PCBshmPtr[0]->timeWorkingNanoseconds;
+
+        printf("were right here %d", PCBshmPtr[0]->totalCPUTimeNanoseconds);
+
+        if((sysClockshmPtr->nanoseconds + PCBshmPtr[0]->timeWorkingNanoseconds) > 999999999){
+            rollover = (sysClockshmPtr->nanoseconds + PCBshmPtr[0]->timeWorkingNanoseconds) - 999999999;
+            sysClockshmPtr->seconds += 1;
+            sysClockshmPtr->nanoseconds = rollover;
+            oneSecHappened = 1;
+        } else {
+            sysClockshmPtr->nanoseconds += PCBshmPtr[0]->timeWorkingNanoseconds;
+        }
+
+        sysClockshmPtr->seconds += PCBshmPtr[0]->totalCPUTimeSeconds;
+
+
+//        PCBshmPtr[0]->totalCPUTimeSeconds = PCBshmPtr[0]->endCPUTimeSeconds - PCBshmPtr[0]->totalCPUTimeSeconds;
         PCBshmPtr[0]->complete = 0;
         FILE *fp = fopen("log.txt", "a+");
-        fprintf(fp, "Finished process with PID %d at time %d %d\n",
-                PCBshmPtr[0]->pidHolder, PCBshmPtr[0]->totalCPUTimeSeconds, PCBshmPtr[0]->totalCPUTimeNanoseconds);
+        fprintf(fp, "Finished process with PID %d at time %d:%d taking %d:%d amount of time\n",
+                PCBshmPtr[0]->pidHolder, sysClockshmPtr->seconds, sysClockshmPtr->nanoseconds,
+                PCBshmPtr[0]->totalCPUTimeSeconds, PCBshmPtr[0]->totalCPUTimeNanoseconds);
         fclose(fp);
     }
 }
