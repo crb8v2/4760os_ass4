@@ -173,5 +173,6 @@ void writeResultsToLog(){
             fclose(fp);
         }
     }
+
 }
 
