@@ -5,14 +5,13 @@
 #include "ass4.h"
 
 void sigint(int);
+static void ALARMhandler();
 void ossClock();
 void forkIfSecondPassed();
 void initForkToPCB(pid_t);
 void roundRobinSchedule();
 void writeResultsToLog();
-
-int oneSecHappened = 0;
-int pids[20] = {0};
+void finalStatsToLog();
 
 int main(int argc, char* argv[]){
 
@@ -27,6 +26,11 @@ int main(int argc, char* argv[]){
 
     // configure shared memory
     sharedMemoryConfig();
+
+    //alarm times out if forks all do not return in 2 seconds
+    signal(SIGALRM, ALARMhandler);
+    alarm(4);
+
 
     // os clock
     while(clockStop == 0){
@@ -52,12 +56,47 @@ int main(int argc, char* argv[]){
 // signal handles ctrl-c
 void sigint(int a) {
     printf("^C caught\n");
+
+    // kill open forks
+    for(int ii = 0; ii < sizeof(pids)/sizeof(int); ii++){
+        if(PCBshmPtr[ii]->pidHolder != 0){
+            signal(SIGQUIT, SIG_IGN);
+            kill(PCBshmPtr[ii]->pidHolder, SIGQUIT);
+        }
+    }
+
+    finalStatsToLog();
+
     // clean shared memory
     shmdt(sysClockshmPtr);
     shmctl(sysClockshmid, IPC_RMID, NULL);
     shmdt(PCBshmPtr);
     shmctl(PCBshmid, IPC_RMID, NULL);
+
     exit(0);
+}
+
+// alarm magic
+static void ALARMhandler() {
+
+    // kill open forks
+    for(int ii = 0; ii < sizeof(pids)/sizeof(int); ii++){
+        if(PCBshmPtr[ii]->pidHolder != 0){
+            signal(SIGQUIT, SIG_IGN);
+            kill(PCBshmPtr[ii]->pidHolder, SIGQUIT);
+        }
+    }
+
+    finalStatsToLog();
+
+    // clean shared memory
+    shmdt(sysClockshmPtr);
+    shmctl(sysClockshmid, IPC_RMID, NULL);
+    shmdt(PCBshmPtr);
+    shmctl(PCBshmid, IPC_RMID, NULL);
+
+    printf("Timed out after 4 seconds.\n");
+    exit(EXIT_SUCCESS);
 }
 
 //increments the clock random value and adjust sec:nanos
@@ -77,10 +116,10 @@ void ossClock(){
         sysClockshmPtr->nanoseconds += clockIncrement;
     }
 
-    printf("%d\n", sysClockshmPtr->seconds);
-    printf("%d\n", sysClockshmPtr->nanoseconds);
+//    printf("%d\n", sysClockshmPtr->seconds);
+//    printf("%d\n", sysClockshmPtr->nanoseconds);
 
-    sleep(1);
+    usleep(200000);
 }
 
 //if one second happens, for a child
@@ -127,9 +166,20 @@ void initForkToPCB(pid_t holder){
 //round robin scheduler
 void roundRobinSchedule(){
 
-    if(sysClockshmPtr->seconds == 3){
+//    for(int ii = 0; ii < sizeof(pids)/sizeof(int); ii++) {
+//        if (pids[ii] != 0) {
+//                msgQueuePtr->pid = PCBshmPtr[0]->pidHolder;
+//        }
+//    }
+
+    if(sysClockshmPtr->seconds == 2){
         msgQueuePtr->pid = PCBshmPtr[0]->pidHolder;
     }
+
+    if(sysClockshmPtr->seconds == 4){
+        msgQueuePtr->pid = PCBshmPtr[2]->pidHolder;
+    }
+
 
 }
 
@@ -141,16 +191,9 @@ void writeResultsToLog(){
     for(int ii = 0; ii < sizeof(pids)/sizeof(int); ii++) {
         if (PCBshmPtr[ii]->complete == 1) {
 
-
-            printf("were right here %d", PCBshmPtr[0]->timeCreateNanoseconds);
-            printf("were right here %d", PCBshmPtr[0]->timeWorkingNanoseconds);
-
-
             PCBshmPtr[0]->totalCPUTimeSeconds = PCBshmPtr[0]->timeCreateSeconds + PCBshmPtr[0]->timeWorkingSeconds;
             PCBshmPtr[0]->totalCPUTimeNanoseconds =
                     PCBshmPtr[0]->timeCreateNanoseconds + PCBshmPtr[0]->timeWorkingNanoseconds;
-
-            printf("were right here %d", PCBshmPtr[0]->totalCPUTimeNanoseconds);
 
             if ((sysClockshmPtr->nanoseconds + PCBshmPtr[0]->timeWorkingNanoseconds) > 999999999) {
                 rollover = (sysClockshmPtr->nanoseconds + PCBshmPtr[0]->timeWorkingNanoseconds) - 999999999;
@@ -174,5 +217,15 @@ void writeResultsToLog(){
         }
     }
 
+}
+
+void finalStatsToLog(){
+    FILE *fp = fopen("log.txt", "a+");
+    fprintf(fp, "**************************************\n");
+    fprintf(fp, "*******Final Clock Time***************\n");
+    fprintf(fp, "**********%d:%d*****************\n", sysClockshmPtr->seconds, sysClockshmPtr-> nanoseconds);
+    fprintf(fp, "**************************************\n");
+
+    fclose(fp);
 }
 

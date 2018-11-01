@@ -71,6 +71,10 @@ systemClock_t *sysClockshmPtr;   //points to the data structure
 PCB_t *PCBshmPtr;
 msgQueue_t *msgQueuePtr;
 
+// for OSS
+int oneSecHappened = 0;
+int pids[20] = {0};
+
 // allocates shared mem
 void sharedMemoryConfig(){
 
