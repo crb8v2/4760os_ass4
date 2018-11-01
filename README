@@ -1,1 +1,38 @@
-readme
+Connor Baniak
+CS4760 - OS
+
+####################
+Link to Github:
+https://github.com/crb8v2/4760os_ass4
+
+#####################
+Project Contains:
+	oss.c
+	user.c
+	ass4.h
+	Makefile
+	README
+#####################
+Usage:
+	./oss
+
+######################
+Structure:
+
+OSS:
+	shared memory
+	while(!endtime)
+		init fork in PCB
+		execl(fork)
+	call round robin scheduler
+		dispatch pid and time quatum to msgQueue
+	put process in the correct queue
+	write results to log file
+
+USER:
+	shared memory
+	busy wait until scheduled
+	generate work to be done 0-3
+		do work
+	update PCB - finished flag
+	flip semaphore/round robin to oss
